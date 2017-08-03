@@ -3,7 +3,7 @@ package filestore
 import (
 	"encoding/json"
 	"fmt"
-	"google_place/datamodel"
+	"google-search-place/datamodel"
 
 	"io/ioutil"
 	"os"

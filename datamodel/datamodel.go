@@ -1,8 +1,16 @@
 package datamodel
 
 type Coffee struct {
-	Name string
-	Rate float32
-	//Add  string
+	Id      string
+	Name    string
+	Rate    float32
+	Reviews []Review
+
 	TEXT []string
+	Text string
+}
+
+type Review struct {
+	StoreId string
+	Text    string
 }

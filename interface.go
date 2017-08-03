@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"google_place/datamodel"
+	"google-search-place/datamodel"
 	"net"
 )
 
 type Storage interface {
 	Read(id string) (datamodel.Coffee, error)
 	Write(data datamodel.Coffee) error
+	//	ReadReviewsByID(id string) []string
 }
 
 type StoppableListener struct {

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"google_place/datamodel"
-	"google_place/storage"
+	"google-search-place/datamodel"
+	"google-search-place/storage/sqlstore"
 	"log"
 
 	"golang.org/x/net/context"
@@ -11,18 +11,20 @@ import (
 )
 
 var (
-	APIKey   = "AIzaSyAFictx33AgxsMkYF-fHCkeakTlBiIZIV4"
-	Radius   uint
-	cof      datamodel.Coffee
-	filename = "coffee_comment.json"
-	Store    Storage
+	APIKey    = "AIzaSyAFictx33AgxsMkYF-fHCkeakTlBiIZIV4"
+	Radius    uint
+	filename  = "coffee_comment.json"
+	fileStore Storage
+	sqlStore  Storage
+	cof       datamodel.Coffee
 )
 
 func main() {
-	var err error
+	//fileStore := fileStore.NewWriteInfile()
 
+	var err error
 	Location := &maps.LatLng{Lat: 25.054989, Lng: 121.533359}
-	Radius = 500
+	Radius = 50
 	Keyword := "coffee"
 	Language := "zh-TW"
 
@@ -34,12 +36,12 @@ func main() {
 }
 
 func PlaceSearch(location *maps.LatLng, radius uint, keyword string, language string) error {
-
+	sqlStore := sqlstore.NewWriteToSQL("root", "123456", "localhost", "hello")
 	c, err := maps.NewClient(maps.WithAPIKey(APIKey))
 	if err != nil {
 		log.Fatalf("fatal error: %s", err)
 	}
-	Store, err := filestore.NewWriteInFile(filename)
+	//Store, err := filestore.NewWriteInFile(filename)
 	if err != nil {
 		fmt.Println("Load File Error!!", err)
 	}
@@ -48,37 +50,47 @@ func PlaceSearch(location *maps.LatLng, radius uint, keyword string, language st
 	request.Radius = radius
 	request.Keyword = keyword
 	request.Language = language
+	for {
+		resp, err := c.NearbySearch(context.Background(), request)
 
-	resp, err := c.NearbySearch(context.Background(), request)
+		if resp.NextPageToken != "" {
+			request.PageToken = resp.NextPageToken
+		}
 
-	if err != nil {
-		log.Fatalf("fatal error: %s", err)
-	}
-
-	text := []string{}
-	for i := 0; i < len(resp.Results); i++ {
-		id := resp.Results[i].PlaceID
-		Name := resp.Results[i].Name
-		Rate := resp.Results[i].Rating
-		cof.Name = Name
-		cof.Rate = Rate
-
-		req := &maps.PlaceDetailsRequest{}
-		req.PlaceID = id
-		req.Language = language
-		respd, err := c.PlaceDetails(context.Background(), req)
 		if err != nil {
 			log.Fatalf("fatal error: %s", err)
 		}
 
-		for j := 0; j < len(respd.Reviews); j++ {
-			Text := respd.Reviews[j].Text
-			text = append(text, Text)
+		//	text := []string{}
+		for i := 0; i < len(resp.Results); i++ {
+			id := resp.Results[i].PlaceID
+			Name := resp.Results[i].Name
+			Rate := resp.Results[i].Rating
+
+			cof.Id = id
+			cof.Name = Name
+			cof.Rate = Rate
+			cof.Reviews = []datamodel.Review{}
+
+			req := &maps.PlaceDetailsRequest{}
+			req.PlaceID = id
+			req.Language = language
+
+			respd, err := c.PlaceDetails(context.Background(), req)
+			if err != nil {
+				log.Fatalf("fatal error: %s", err)
+			}
+
+			for j := 0; j < len(respd.Reviews); j++ {
+				review := datamodel.Review{cof.Id, respd.Reviews[j].Text}
+				cof.Reviews = append(cof.Reviews, review)
+			}
+			err = sqlStore.Write(cof)
+			if err != nil {
+				fmt.Println("Write In Sql Error!!", err)
+			}
+
 		}
-		cof.TEXT = text
-
 	}
-	Store.Write(cof)
-
 	return nil
 }
