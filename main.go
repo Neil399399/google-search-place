@@ -23,16 +23,34 @@ func main() {
 	//fileStore := fileStore.NewWriteInfile()
 
 	var err error
+
 	Location := &maps.LatLng{Lat: 25.054989, Lng: 121.533359}
-	Radius = 50
+	Radius = 500
 	Keyword := "coffee"
 	Language := "zh-TW"
+
+	//search place and use sql write in mariaDB
 
 	err = PlaceSearch(Location, Radius, Keyword, Language)
 	if err != nil {
 		fmt.Println("google Place Search Error!!", err)
 	}
 
+	/*
+		//Read comment From mariaDB by Rating
+		fmt.Println("INPUT THR RATE WHICH YOU WANT FIND :")
+		reader := bufio.NewReader(os.Stdin)
+		input, _, _ := reader.ReadLine()
+		f64, err := strconv.ParseFloat(string(input), 32)
+		rate := float32(f64)
+		fmt.Println(rate)
+
+		cof.Rate = rate
+		SQLSelectComment(cof)
+		if err != nil {
+			fmt.Println("SQL Select Error!!", err)
+		}
+	*/
 }
 
 func PlaceSearch(location *maps.LatLng, radius uint, keyword string, language string) error {
@@ -53,12 +71,11 @@ func PlaceSearch(location *maps.LatLng, radius uint, keyword string, language st
 	for {
 		resp, err := c.NearbySearch(context.Background(), request)
 
-		if resp.NextPageToken != "" {
-			request.PageToken = resp.NextPageToken
-		}
-
+		request.PageToken = resp.NextPageToken
 		if err != nil {
 			log.Fatalf("fatal error: %s", err)
+			fmt.Println("Search over!!")
+			break
 		}
 
 		//	text := []string{}
@@ -79,6 +96,7 @@ func PlaceSearch(location *maps.LatLng, radius uint, keyword string, language st
 			respd, err := c.PlaceDetails(context.Background(), req)
 			if err != nil {
 				log.Fatalf("fatal error: %s", err)
+
 			}
 
 			for j := 0; j < len(respd.Reviews); j++ {
@@ -91,6 +109,20 @@ func PlaceSearch(location *maps.LatLng, radius uint, keyword string, language st
 			}
 
 		}
+		request.Location = nil
+		request.Radius = 0
+		request.Keyword = ""
+		request.Language = ""
+	}
+	return nil
+}
+
+func SQLSelectComment(data datamodel.Coffee) error {
+
+	sqlStore := sqlstore.NewWriteToSQL("root", "123456", "localhost", "hello")
+	err := sqlStore.Read(cof)
+	if err != nil {
+		fmt.Println("Select Comment Error!!", err)
 	}
 	return nil
 }

@@ -14,3 +14,9 @@ type Review struct {
 	StoreId string
 	Text    string
 }
+
+type Comment struct {
+	ID      string
+	PlaceID string
+	Comment string
+}

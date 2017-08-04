@@ -30,7 +30,12 @@ func NewWriteToSQL(username, password, serverurl, database string) *WriteToSQL {
 	return &WriteToSQL{db: DB}
 }
 
-func (w *WriteToSQL) Read(id string) error {
+func (w *WriteToSQL) Read(data datamodel.Coffee) error {
+	_, err := w.db.Exec("SELECT Comment FROM CoffeeComment WHERE PlaceID IN (SELECT PlaceID FROM CoffeeInfo WHERE Rate= CAST(? AS DECIMAL))", data.Rate)
+	if err != nil {
+		fmt.Println("Read Comment Error!!")
+		panic(err)
+	}
 
 	return nil
 }
