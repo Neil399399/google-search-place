@@ -53,5 +53,5 @@ func main() {
 	jiebago.Segmenter.CutForSearch
 
 	//}
-gojieba.
+
 }
