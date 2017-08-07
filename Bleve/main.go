@@ -56,7 +56,7 @@ func main() {
 		fmt.Println(searchResults)
 	*/
 
-	err := jieba("coffee.bleve")
+	err := jiebatest()
 	if err != nil {
 		fmt.Println("jieba Error!!", err)
 	}
@@ -127,14 +127,15 @@ func jieba(INDEX_DIR string) error {
 	return nil
 }
 
-func jiebatest(INDEX_DIR string) error {
+func jiebatest() error {
+	indexMapping := bleve.NewIndexMapping()
 	err := indexMapping.AddCustomTokenizer("gojieba",
 		map[string]interface{}{
 			"dictpath":   "jieba/dict.txt",
 			"hmmpath":    "jieba/hmm_model.utf8",
 			"idf":        "idf.utf8",
 			"stop_words": "stop_word.utf8",
-			"type":       "gojieba",
+			"type":       "unicode",
 		},
 	)
 	if err != nil {
@@ -152,6 +153,8 @@ func jiebatest(INDEX_DIR string) error {
 	indexMapping.DefaultAnalyzer = "gojieba"
 
 	querys := []string{
+		"舒服",
+		"不錯",
 		"咖啡好喝",
 		"好喝",
 		"好",
