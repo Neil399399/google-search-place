@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 
 	"github.com/blevesearch/bleve"
-	"github.com/blevesearch/bleve/index"
 	"github.com/yanyiwu/gojieba"
 )
 
@@ -16,49 +15,31 @@ type JiebaTokenizer struct {
 }
 
 var (
-	filename = "CoffeeComment.json"
+	filename  = "CoffeeComment.json"
+	index_dir = "coffee.bleve"
 )
 
 func main() {
-	/*
-		com, err := Read(filename)
-		if err != nil {
-			fmt.Println("Read Error!!", err)
-		}
-		//fmt.Println(com[0].Comment)
 
-		// open a new index
-		mapping := bleve.NewIndexMapping()
-		index, err := bleve.New("coffee.bleve", mapping)
-		if err != nil {
-			fmt.Println(err)
-		}
-	*/
-	// index some data
-	for i := 0; i < len(com); i++ {
-		err = index.Index(com[i].ID, com[i].Comment)
-		fmt.Println(com[i].Comment)
+	com, err := Read(filename)
+	if err != nil {
+		fmt.Println("Read Error!!", err)
 	}
-
-	// search for some text
 	/*
-		index, err := bleve.Open("coffee.bleve")
+		err = CreateIndex(com, index_dir)
 		if err != nil {
-			fmt.Println("Open index Error!!", err)
+			fmt.Println("CreateIndex Error!!", err)
 		}
-		query := bleve.NewMatchQuery("咖啡")
-		search := bleve.NewSearchRequest(query)
-		searchResults, err := index.Search(search)
-		if err != nil {
-			fmt.Println(err)
-		}
-		fmt.Println(searchResults)
 	*/
-
-	err := jiebatest()
+	query, err := jiebatest()
 	if err != nil {
 		fmt.Println("jieba Error!!", err)
 	}
+	err = CountResult(index_dir, query)
+	if err != nil {
+		fmt.Println("CountTesult Error!!", err)
+	}
+
 }
 
 func Read(filename string) ([]datamodel.Comment, error) {
@@ -80,7 +61,24 @@ func Read(filename string) ([]datamodel.Comment, error) {
 	return com, nil
 }
 
-func jiebatest() error {
+func CreateIndex(com []datamodel.Comment, index_dir string) error {
+	// open a new index
+	mapping := bleve.NewIndexMapping()
+	index, err := bleve.New(index_dir, mapping)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// index some data
+	for i := 0; i < len(com); i++ {
+		err = index.Index(com[i].ID, com[i].Comment)
+		//fmt.Println(com[i].Comment)
+	}
+
+	return nil
+}
+
+func jiebatest() ([]string, error) {
 	indexMapping := bleve.NewIndexMapping()
 	err := indexMapping.AddCustomTokenizer("gojieba",
 		map[string]interface{}{
@@ -105,25 +103,10 @@ func jiebatest() error {
 		"好",
 	}
 
-	index, err := bleve.Open("coffee.bleve")
-	if err != nil {
-		fmt.Println("Open index Error!!", err)
-	}
-
-	for _, q := range querys {
-		req := bleve.NewSearchRequest(bleve.NewQueryStringQuery(q))
-		req.Highlight = bleve.NewHighlight()
-		res, err := index.Search(req)
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println(prettify(res))
-	}
-
-	return nil
+	return querys, nil
 }
 
-func prettify(res *bleve.SearchResult) string {
+func prettify(res *bleve.SearchResult) (string, error) {
 	type Result struct {
 		Id    string
 		Score float64
@@ -138,23 +121,40 @@ func prettify(res *bleve.SearchResult) string {
 		panic(err)
 	}
 	fmt.Println(string(b))
-	//counter
-	type conditional struct {
-		cond []int
-	}
-	dataCounter := make(map[string]conditional)
-	for i := 0; i < len(results); i++ {
-		for j := 0; i < len(results[i].Id); i++ {
-			dataCount[results[i].id[j]].cond[i]++
-		}
+
+	return string(b), nil
+}
+
+func CountResult(index_dir string, querys []string) error {
+	type Result struct {
+		Id    string
+		Score float64
 	}
 
+	index, err := bleve.Open(index_dir)
+	if err != nil {
+		fmt.Println("Open index Error!!", err)
+	}
+	dataCounter := make(map[string]int)
+	for _, q := range querys {
+		req := bleve.NewSearchRequest(bleve.NewQueryStringQuery(q))
+		req.Highlight = bleve.NewHighlight()
+		res, err := index.Search(req)
+		if err != nil {
+			panic(err)
+		}
+		results := []Result{}
+		for _, item := range res.Hits {
+			results = append(results, Result{item.ID, item.Score})
+		}
+
+		for i := 0; i < len(results); i++ {
+			dataCounter[results[i].Id]++
+		}
+	}
 	for k, v := range dataCounter {
-		total := 0
-		for i := 0; i < len(v.cond); i++ {
-			total += v.cond[i]
-		}
+		fmt.Println("id:", k)
+		fmt.Println("total:", v)
 	}
-
 	return nil
 }
