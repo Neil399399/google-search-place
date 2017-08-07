@@ -139,7 +139,7 @@ func jiebatest() error {
 		},
 	)
 	if err != nil {
-		panic(err)
+		fmt.Println("Tokenizer Error!!", err)
 	}
 	err = indexMapping.AddCustomAnalyzer("gojieba",
 		map[string]interface{}{
@@ -148,7 +148,7 @@ func jiebatest() error {
 		},
 	)
 	if err != nil {
-		panic(err)
+		fmt.Println("Analyzer Error!!", err)
 	}
 	indexMapping.DefaultAnalyzer = "gojieba"
 
