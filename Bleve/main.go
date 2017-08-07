@@ -20,27 +20,26 @@ var (
 )
 
 func main() {
-	
-		com, err := Read(filename)
-		if err != nil {
-			fmt.Println("Read Error!!", err)
-		}
-		//fmt.Println(com[0].Comment)
 
-		// open a new index
-		mapping := bleve.NewIndexMapping()
-		index, err := bleve.New("coffee.bleve", mapping)
-		if err != nil {
-			fmt.Println(err)
-		}
+	/*		com, err := Read(filename)
+			if err != nil {
+				fmt.Println("Read Error!!", err)
+			}
+			//fmt.Println(com[0].Comment)
 
-		// index some data
-		for i := 0; i < len(com); i++ {
-			err = index.Index(com[i].ID, com[i].Comment)
-			fmt.Println(com[i].Comment)
-		}
-	
+			// open a new index
+			mapping := bleve.NewIndexMapping()
+			index, err := bleve.New("coffee.bleve", mapping)
+			if err != nil {
+				fmt.Println(err)
+			}
 
+			// index some data
+			for i := 0; i < len(com); i++ {
+				err = index.Index(com[i].ID, com[i].Comment)
+				fmt.Println(com[i].Comment)
+			}
+	*/
 	// search for some text
 	/*
 		index, err := bleve.Open("coffee.bleve")
@@ -56,10 +55,10 @@ func main() {
 		fmt.Println(searchResults)
 	*/
 
-/*	err := jiebatest()
+	err := jiebatest()
 	if err != nil {
 		fmt.Println("jieba Error!!", err)
-*/	}
+	}
 }
 
 func Read(filename string) ([]datamodel.Comment, error) {
@@ -147,15 +146,13 @@ func jiebatest() error {
 			"tokenizer": "gojieba",
 		},
 	)
-indexMapping.DefaultType()
-
 	if err != nil {
 		fmt.Println("Analyzer Error!!", err)
 	}
 	indexMapping.DefaultAnalyzer = "gojieba"
 
 	querys := []string{
-		"舒服",
+		"環境舒服",
 		"不錯",
 		"咖啡好喝",
 		"好喝",
