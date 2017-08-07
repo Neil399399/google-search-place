@@ -20,7 +20,7 @@ var (
 )
 
 func main() {
-	/*
+	
 		com, err := Read(filename)
 		if err != nil {
 			fmt.Println("Read Error!!", err)
@@ -39,7 +39,7 @@ func main() {
 			err = index.Index(com[i].ID, com[i].Comment)
 			fmt.Println(com[i].Comment)
 		}
-	*/
+	
 
 	// search for some text
 	/*
@@ -56,10 +56,10 @@ func main() {
 		fmt.Println(searchResults)
 	*/
 
-	err := jiebatest()
+/*	err := jiebatest()
 	if err != nil {
 		fmt.Println("jieba Error!!", err)
-	}
+*/	}
 }
 
 func Read(filename string) ([]datamodel.Comment, error) {
@@ -147,6 +147,8 @@ func jiebatest() error {
 			"tokenizer": "gojieba",
 		},
 	)
+indexMapping.DefaultType()
+
 	if err != nil {
 		fmt.Println("Analyzer Error!!", err)
 	}
