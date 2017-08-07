@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 
 	"github.com/blevesearch/bleve"
+	"github.com/blevesearch/bleve/index"
 	"github.com/yanyiwu/gojieba"
 )
 
@@ -19,26 +20,26 @@ var (
 )
 
 func main() {
+	/*
+		com, err := Read(filename)
+		if err != nil {
+			fmt.Println("Read Error!!", err)
+		}
+		//fmt.Println(com[0].Comment)
 
-	/*		com, err := Read(filename)
-			if err != nil {
-				fmt.Println("Read Error!!", err)
-			}
-			//fmt.Println(com[0].Comment)
-
-			// open a new index
-			mapping := bleve.NewIndexMapping()
-			index, err := bleve.New("coffee.bleve", mapping)
-			if err != nil {
-				fmt.Println(err)
-			}
-
-			// index some data
-			for i := 0; i < len(com); i++ {
-				err = index.Index(com[i].ID, com[i].Comment)
-				fmt.Println(com[i].Comment)
-			}
+		// open a new index
+		mapping := bleve.NewIndexMapping()
+		index, err := bleve.New("coffee.bleve", mapping)
+		if err != nil {
+			fmt.Println(err)
+		}
 	*/
+	// index some data
+	for i := 0; i < len(com); i++ {
+		err = index.Index(com[i].ID, com[i].Comment)
+		fmt.Println(com[i].Comment)
+	}
+
 	// search for some text
 	/*
 		index, err := bleve.Open("coffee.bleve")
