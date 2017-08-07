@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"google-search-place/datamodel"
 	"io/ioutil"
-	"os"
+	"log"
 
 	"github.com/blevesearch/bleve"
 	"github.com/yanyiwu/gojieba"
 )
+
+type JiebaTokenizer struct {
+	handle *gojieba.Jieba
+}
 
 var (
 	filename = "CoffeeComment.json"
@@ -38,18 +42,24 @@ func main() {
 	*/
 
 	// search for some text
-	index, err := bleve.Open("coffee.bleve")
-	if err != nil {
-		fmt.Println("Open index Error!!", err)
-	}
-	query := bleve.NewMatchQuery("咖啡")
-	search := bleve.NewSearchRequest(query)
-	searchResults, err := index.Search(search)
-	if err != nil {
-		fmt.Println(err)
-	}
-	fmt.Println(searchResults)
+	/*
+		index, err := bleve.Open("coffee.bleve")
+		if err != nil {
+			fmt.Println("Open index Error!!", err)
+		}
+		query := bleve.NewMatchQuery("咖啡")
+		search := bleve.NewSearchRequest(query)
+		searchResults, err := index.Search(search)
+		if err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println(searchResults)
+	*/
 
+	err := jieba("coffee.bleve")
+	if err != nil {
+		fmt.Println("jieba Error!!", err)
+	}
 }
 
 func Read(filename string) ([]datamodel.Comment, error) {
@@ -71,18 +81,60 @@ func Read(filename string) ([]datamodel.Comment, error) {
 	return com, nil
 }
 
-func jieba(INDEX_DIR stringg) error {
+func jieba(INDEX_DIR string) error {
 	indexMapping := bleve.NewIndexMapping()
-	os.RemoveAll(INDEX_DIR)
-	// clean index when example finished
-	defer os.RemoveAll(INDEX_DIR)
 
+	err := indexMapping.AddCustomTokenizer("jieba",
+		map[string]interface{}{
+			"file": "jieba/dict.txt",
+			"type": "咖啡",
+		})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = indexMapping.AddCustomAnalyzer("jieba",
+		map[string]interface{}{
+			"type":      "custom",
+			"tokenizer": "咖啡",
+			"token_filters": []string{
+				"possessive_en",
+				"to_lower",
+				"stop_en",
+			},
+		})
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	indexMapping.DefaultAnalyzer = "jieba"
+
+	index, err := bleve.Open(INDEX_DIR)
+	if err != nil {
+		fmt.Println("Open index Error!!", err)
+	}
+	for _, keyword := range []string{"咖啡"} {
+		query := bleve.NewMatchQuery(keyword)
+		search := bleve.NewSearchRequest(query)
+		search.Highlight = bleve.NewHighlight()
+		searchResults, err := index.Search(search)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Printf("Result of %s: %s\n", keyword, searchResults)
+	}
+	return nil
+}
+
+func jiebatest(INDEX_DIR string) error {
 	err := indexMapping.AddCustomTokenizer("gojieba",
 		map[string]interface{}{
-			"dictpath":     gojieba.DICT_PATH,
-			"hmmpath":      gojieba.HMM_PATH,
-			"userdictpath": gojieba.USER_DICT_PATH,
-			"type":         "gojieba",
+			"dictpath":   "jieba/dict.txt",
+			"hmmpath":    "jieba/hmm_model.utf8",
+			"idf":        "idf.utf8",
+			"stop_words": "stop_word.utf8",
+			"type":       "gojieba",
 		},
 	)
 	if err != nil {
@@ -99,18 +151,15 @@ func jieba(INDEX_DIR stringg) error {
 	}
 	indexMapping.DefaultAnalyzer = "gojieba"
 
-	index, err := bleve.New(INDEX_DIR, indexMapping)
-	if err != nil {
-		panic(err)
-	}
-	for _, msg := range messages {
-		if err := index.Index(msg.Id, msg); err != nil {
-			panic(err)
-		}
+	querys := []string{
+		"咖啡好喝",
+		"好喝",
+		"好",
 	}
 
-	querys := []string{
-		"咖啡",
+	index, err := bleve.Open("coffee.bleve")
+	if err != nil {
+		fmt.Println("Open index Error!!", err)
 	}
 
 	for _, q := range querys {
@@ -120,6 +169,23 @@ func jieba(INDEX_DIR stringg) error {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println(res)
+		fmt.Println(prettify(res))
 	}
+	return nil
+}
+
+func prettify(res *bleve.SearchResult) string {
+	type Result struct {
+		Id    string
+		Score float64
+	}
+	results := []Result{}
+	for _, item := range res.Hits {
+		results = append(results, Result{item.ID, item.Score})
+	}
+	b, err := json.Marshal(results)
+	if err != nil {
+		panic(err)
+	}
+	return string(b)
 }
