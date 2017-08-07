@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"google-search-place/datamodel"
 	"io/ioutil"
-	"log"
 
 	"github.com/blevesearch/bleve"
 	"github.com/yanyiwu/gojieba"
@@ -80,52 +79,6 @@ func Read(filename string) ([]datamodel.Comment, error) {
 	return com, nil
 }
 
-func jieba(INDEX_DIR string) error {
-	indexMapping := bleve.NewIndexMapping()
-
-	err := indexMapping.AddCustomTokenizer("jieba",
-		map[string]interface{}{
-			"file": "jieba/dict.txt",
-			"type": "咖啡",
-		})
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	err = indexMapping.AddCustomAnalyzer("jieba",
-		map[string]interface{}{
-			"type":      "custom",
-			"tokenizer": "咖啡",
-			"token_filters": []string{
-				"possessive_en",
-				"to_lower",
-				"stop_en",
-			},
-		})
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	indexMapping.DefaultAnalyzer = "jieba"
-
-	index, err := bleve.Open(INDEX_DIR)
-	if err != nil {
-		fmt.Println("Open index Error!!", err)
-	}
-	for _, keyword := range []string{"咖啡"} {
-		query := bleve.NewMatchQuery(keyword)
-		search := bleve.NewSearchRequest(query)
-		search.Highlight = bleve.NewHighlight()
-		searchResults, err := index.Search(search)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Result of %s: %s\n", keyword, searchResults)
-	}
-	return nil
-}
-
 func jiebatest() error {
 	indexMapping := bleve.NewIndexMapping()
 	err := indexMapping.AddCustomTokenizer("gojieba",
@@ -140,15 +93,7 @@ func jiebatest() error {
 	if err != nil {
 		fmt.Println("Tokenizer Error!!", err)
 	}
-	err = indexMapping.AddCustomAnalyzer("gojieba",
-		map[string]interface{}{
-			"type":      "gojieba",
-			"tokenizer": "gojieba",
-		},
-	)
-	if err != nil {
-		fmt.Println("Analyzer Error!!", err)
-	}
+
 	indexMapping.DefaultAnalyzer = "gojieba"
 
 	querys := []string{
@@ -173,6 +118,7 @@ func jiebatest() error {
 		}
 		fmt.Println(prettify(res))
 	}
+
 	return nil
 }
 
@@ -185,9 +131,29 @@ func prettify(res *bleve.SearchResult) string {
 	for _, item := range res.Hits {
 		results = append(results, Result{item.ID, item.Score})
 	}
+
 	b, err := json.Marshal(results)
 	if err != nil {
 		panic(err)
 	}
-	return string(b)
+	fmt.Println(string(b))
+	//counter
+	type conditional struct {
+		cond []int
+	}
+	dataCounter := make(map[string]conditional)
+	for i := 0; i < len(results); i++ {
+		for j := 0; i < len(results[i].Id); i++ {
+			dataCount[results[i].id[j]].cond[i]++
+		}
+	}
+
+	for k, v := range dataCounter {
+		total := 0
+		for i := 0; i < len(v.cond); i++ {
+			total += v.cond[i]
+		}
+	}
+
+	return nil
 }
