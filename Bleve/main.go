@@ -14,6 +14,10 @@ import (
 type JiebaTokenizer struct {
 	handle *gojieba.Jieba
 }
+type CountArray struct {
+	id    string
+	total int
+}
 
 var (
 	filename  = "CoffeeComment.json"
@@ -40,10 +44,15 @@ func main() {
 	if err != nil {
 		fmt.Println("CountTesult Error!!", err)
 	}
-	err = SortTotal(dataCounter)
+	res, err := SortTotal(dataCounter)
 	if err != nil {
 		fmt.Println("Sort Total Error!!", err)
 	}
+	fir, sec, thr, err = Top3(res)
+	if err != nil {
+		fmt.Println("Find Top3 Error!!", err)
+	}
+	fmt.Println(fir, sec, thr)
 
 }
 
@@ -165,13 +174,10 @@ func CountResult(index_dir string, querys []string) (map[string]int, error) {
 	return dataCounter, nil
 }
 
-func SortTotal(data map[string]int) error {
-	type CountArray struct {
-		id    string
-		total int
-	}
-	len := len(data)
-	countarrays := [len]CountArray{}
+func SortTotal(data map[string]int) ([]CountArray, error) {
+
+	//USE Slice (can't not use Array)
+	countarrays := make([]CountArray, len(data))
 	i := 0
 	for k, v := range data {
 
@@ -184,12 +190,19 @@ func SortTotal(data map[string]int) error {
 			fmt.Println("i>len(data):", i)
 		}
 	}
-
-	fmt.Println(countarrays)
 	sort.Slice(countarrays, func(i, j int) bool {
 		return countarrays[i].total >= countarrays[j].total
 	})
-	fmt.Println(countarrays)
+	//fmt.Println(countarrays)
 
-	return nil
+	return countarrays, nil
+}
+func Top3(data []CountArray) (string, string, string, error) {
+	var top1, top2, top3 string
+	fmt.Println(data[0], data[1], data[2])
+	top1 = data[0].id
+	top2 = data[1].id
+	top3 = data[2].id
+
+	return top1, top2, top3, nil
 }
