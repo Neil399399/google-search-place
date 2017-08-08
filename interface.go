@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"google-search-place/datamodel"
 	"net"
@@ -9,6 +10,8 @@ import (
 type Storage interface {
 	Read(id string) (datamodel.Coffee, error)
 	Write(data datamodel.Coffee) error
+	ReadId(data datamodel.Coffee) (*sql.Rows, error)
+	ReadName(data datamodel.Coffee) (*sql.Rows, error)
 	//	ReadReviewsByID(id string) []string
 }
 
@@ -29,4 +32,15 @@ func (s StoreImpl) Write(data datamodel.Coffee) error {
 	fmt.Println("WRITE?")
 
 	return nil
+}
+
+func (s StoreImpl) ReadId(data datamodel.Coffee) (*sql.Rows, error) {
+	fmt.Println("ReadId?")
+
+	return nil, nil
+}
+
+func (s StoreImpl) ReadName(data datamodel.Coffee) (*sql.Rows, error) {
+	fmt.Println("ReadName?")
+	return nil, nil
 }

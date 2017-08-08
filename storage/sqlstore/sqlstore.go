@@ -30,15 +30,23 @@ func NewWriteToSQL(username, password, serverurl, database string) *WriteToSQL {
 	return &WriteToSQL{db: DB}
 }
 
-func (w *WriteToSQL) Read(data datamodel.Coffee) error {
-	_, err := w.db.Exec("SELECT Comment FROM CoffeeComment WHERE PlaceID IN (SELECT PlaceID FROM CoffeeInfo WHERE Rate= CAST(? AS DECIMAL))", data.Rate)
+func (w *WriteToSQL) ReadId(data datamodel.Coffee) (*sql.Rows, error) {
+	return w.read("SELECT Comment FROM CoffeeComment WHERE PlaceID IN (SELECT PlaceID FROM CoffeeInfo WHERE Rate= CAST(? AS DECIMAL))", data.Rate)
+}
+
+func (w *WriteToSQL) ReadName(data datamodel.Coffee) (*sql.Rows, error) {
+	return w.read("SELECT Name FROM CoffeeInfo WHERE PlaceID IN (SELECT PlaceID FROM CoffeeComment WHERE ID= ?", data.Id)
+}
+
+func (w *WriteToSQL) read(sqlQuery string, args ...interface{}) (*sql.Rows, error) {
+	res, err := w.db.Query(sqlQuery, args...)
 	if err != nil {
-		fmt.Println("Read Comment Error!!")
-		panic(err)
+		fmt.Println("Read Comment Error!!", err)
 	}
 
-	return nil
+	return res, nil
 }
+
 func (w *WriteToSQL) Write(data datamodel.Coffee) error {
 
 	_, err := w.db.Exec("INSERT INTO CoffeeInfo (PlaceID,Name,Rate) VALUES (?,?,?)", data.Id, data.Name, data.Rate)

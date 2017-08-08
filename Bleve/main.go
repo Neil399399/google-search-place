@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"google-search-place/datamodel"
+	"google-search-place/storage/sqlstore"
 	"io/ioutil"
 	"sort"
 
@@ -25,6 +26,7 @@ var (
 	filename1  = "CoffeeComment.json"
 	index_dir  = "coffee.bleve"
 	index_dir1 = "coffeeInfo.bleve"
+	name       string
 )
 
 func main() {
@@ -53,6 +55,10 @@ func main() {
 		fmt.Println("Find Top3 Error!!", err)
 	}
 	fmt.Println(first, second, third)
+	err = FindIDInfo(first)
+	if err != nil {
+		fmt.Println("Find ID Info Error!!", err)
+	}
 
 }
 
@@ -180,10 +186,7 @@ func SortTotal(data map[string]int) ([]CountArray, error) {
 	countarrays := make([]CountArray, len(data))
 	i := 0
 	for k, v := range data {
-
-		fmt.Println("id:", k)
 		countarrays[i].id = k
-		fmt.Println("total:", v)
 		countarrays[i].total = v
 		i++
 		if i > len(data) {
@@ -205,17 +208,21 @@ func Top3(data []CountArray) (string, string, string, error) {
 	return top1, top2, top3, nil
 }
 
-func FindIDInfo(index_dir, first, second, third string) error {
-	index, err := bleve.Open(index_dir)
-	if err != nil {
-		fmt.Println("Open index Error!!", err)
-	}
+func FindIDInfo(first string) error {
 
-	req := bleve.NewSearchRequest(bleve.NewQueryStringQuery(first))
-	res, err := index.Search(req)
+	data := datamodel.Coffee{}
+	data.Id = first
+	sqlStore := sqlstore.NewWriteToSQL("root", "123456", "localhost", "hello")
+	sql_res, err := sqlStore.ReadName(data)
 	if err != nil {
-		panic(err)
+		fmt.Println("Search PlaceID in SQL Error!!", err)
 	}
-	fmt.Println(res)
+	for sql_res.Next() {
+		err := sql_res.Scan(&name)
+		if err != nil {
+			fmt.Println("SQL Result Print Error!!", err)
+		}
+		fmt.Println(name)
+	}
 	return nil
 }
