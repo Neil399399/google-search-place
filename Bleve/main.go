@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"google-search-place/datamodel"
 	"io/ioutil"
+	"sort"
 
 	"github.com/blevesearch/bleve"
 	"github.com/yanyiwu/gojieba"
@@ -169,19 +170,25 @@ func SortTotal(data map[string]int) error {
 		id    string
 		total int
 	}
+	len := len(data)
+	countarrays := [len]CountArray{}
+	i := 0
+	for k, v := range data {
 
-	fmt.Println(data)
-	fmt.Println(len(data))
-	countarrays := []CountArray{}
-	for i := 0; i < len(data); i++ {
-		for k, v := range data {
-
-			fmt.Println("id:", k)
-			countarrays[i].id = k
-			fmt.Println("total:", v)
-			countarrays[i].total = v
+		fmt.Println("id:", k)
+		countarrays[i].id = k
+		fmt.Println("total:", v)
+		countarrays[i].total = v
+		i++
+		if i > len(data) {
+			fmt.Println("i>len(data):", i)
 		}
 	}
+
+	fmt.Println(countarrays)
+	sort.Slice(countarrays, func(i, j int) bool {
+		return countarrays[i].total >= countarrays[j].total
+	})
 	fmt.Println(countarrays)
 
 	return nil
