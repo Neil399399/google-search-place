@@ -8,51 +8,51 @@ import (
 	"sort"
 
 	"github.com/blevesearch/bleve"
-	"github.com/yanyiwu/gojieba"
 )
 
+/*
 type JiebaTokenizer struct {
 	handle *gojieba.Jieba
 }
+*/
 type CountArray struct {
 	id    string
 	total int
 }
 
 var (
-	filename  = "CoffeeComment.json"
-	index_dir = "coffee.bleve"
+	filename   = "CoffeeComment.json"
+	filename1  = "CoffeeComment.json"
+	index_dir  = "coffee.bleve"
+	index_dir1 = "coffeeInfo.bleve"
 )
 
 func main() {
-
-	/*	com, err := Read(filename)
+	/*
+		com, err := Read(filename)
 		if err != nil {
 			fmt.Println("Read Error!!", err)
 		}
 
-			err = CreateIndex(com, index_dir)
-			if err != nil {
-				fmt.Println("CreateIndex Error!!", err)
-			}
+		err = CreateIndex(com, index_dir1)
+		if err != nil {
+			fmt.Println("CreateIndex Error!!", err)
+		}
 	*/
-	query, err := jiebatest()
+
+	jieb_res, err := jiebatest(index_dir)
 	if err != nil {
 		fmt.Println("jieba Error!!", err)
 	}
-	dataCounter, err := CountResult(index_dir, query)
-	if err != nil {
-		fmt.Println("CountTesult Error!!", err)
-	}
-	res, err := SortTotal(dataCounter)
+	sort_res, err := SortTotal(jieb_res)
 	if err != nil {
 		fmt.Println("Sort Total Error!!", err)
 	}
-	fir, sec, thr, err = Top3(res)
+	first, second, third, err := Top3(sort_res)
 	if err != nil {
 		fmt.Println("Find Top3 Error!!", err)
 	}
-	fmt.Println(fir, sec, thr)
+	fmt.Println(first, second, third)
 
 }
 
@@ -92,7 +92,11 @@ func CreateIndex(com []datamodel.Comment, index_dir string) error {
 	return nil
 }
 
-func jiebatest() ([]string, error) {
+func jiebatest(index_dir string) (map[string]int, error) {
+	type Result struct {
+		Id    string
+		Score float64
+	}
 	indexMapping := bleve.NewIndexMapping()
 	err := indexMapping.AddCustomTokenizer("gojieba",
 		map[string]interface{}{
@@ -117,34 +121,6 @@ func jiebatest() ([]string, error) {
 		"好",
 	}
 
-	return querys, nil
-}
-
-func prettify(res *bleve.SearchResult) (string, error) {
-	type Result struct {
-		Id    string
-		Score float64
-	}
-	results := []Result{}
-	for _, item := range res.Hits {
-		results = append(results, Result{item.ID, item.Score})
-	}
-
-	b, err := json.Marshal(results)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(string(b))
-
-	return string(b), nil
-}
-
-func CountResult(index_dir string, querys []string) (map[string]int, error) {
-	type Result struct {
-		Id    string
-		Score float64
-	}
-
 	index, err := bleve.Open(index_dir)
 	if err != nil {
 		fmt.Println("Open index Error!!", err)
@@ -166,12 +142,36 @@ func CountResult(index_dir string, querys []string) (map[string]int, error) {
 			dataCounter[results[i].Id]++
 		}
 	}
-	for k, v := range dataCounter {
+
+	return dataCounter, nil
+}
+
+func prettify(res *bleve.SearchResult) (string, error) {
+	type Result struct {
+		Id    string
+		Score float64
+	}
+	results := []Result{}
+	for _, item := range res.Hits {
+		results = append(results, Result{item.ID, item.Score})
+	}
+
+	b, err := json.Marshal(results)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(string(b))
+
+	return string(b), nil
+}
+
+func CountResult(data map[string]int) error {
+
+	for k, v := range data {
 		fmt.Println("id:", k)
 		fmt.Println("total:", v)
-
 	}
-	return dataCounter, nil
+	return nil
 }
 
 func SortTotal(data map[string]int) ([]CountArray, error) {
@@ -193,16 +193,29 @@ func SortTotal(data map[string]int) ([]CountArray, error) {
 	sort.Slice(countarrays, func(i, j int) bool {
 		return countarrays[i].total >= countarrays[j].total
 	})
-	//fmt.Println(countarrays)
 
 	return countarrays, nil
 }
 func Top3(data []CountArray) (string, string, string, error) {
 	var top1, top2, top3 string
-	fmt.Println(data[0], data[1], data[2])
 	top1 = data[0].id
 	top2 = data[1].id
 	top3 = data[2].id
 
 	return top1, top2, top3, nil
+}
+
+func FindIDInfo(index_dir, first, second, third string) error {
+	index, err := bleve.Open(index_dir)
+	if err != nil {
+		fmt.Println("Open index Error!!", err)
+	}
+
+	req := bleve.NewSearchRequest(bleve.NewQueryStringQuery(first))
+	res, err := index.Search(req)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(res)
+	return nil
 }
