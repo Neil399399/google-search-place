@@ -39,7 +39,7 @@ func main() {
 	if err != nil {
 		fmt.Println("CountTesult Error!!", err)
 	}
-	error := SortTotal(dataCounter)
+	err = SortTotal(dataCounter)
 	if err != nil {
 		fmt.Println("Sort Total Error!!", err)
 	}
@@ -165,10 +165,24 @@ func CountResult(index_dir string, querys []string) (map[string]int, error) {
 }
 
 func SortTotal(data map[string]int) error {
+	type CountArray struct {
+		id    string
+		total int
+	}
 
 	fmt.Println(data)
-	fmt.Println(data[2])
 	fmt.Println(len(data))
+	countarrays := []CountArray{}
+	for i := 0; i < len(data); i++ {
+		for k, v := range data {
+
+			fmt.Println("id:", k)
+			countarrays[i].id = k
+			fmt.Println("total:", v)
+			countarrays[i].total = v
+		}
+	}
+	fmt.Println(countarrays)
 
 	return nil
 }
