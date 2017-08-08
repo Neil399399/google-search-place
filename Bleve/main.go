@@ -55,6 +55,7 @@ func main() {
 		fmt.Println("Find Top3 Error!!", err)
 	}
 	fmt.Println(first, second, third)
+
 	err = FindIDInfo(first)
 	if err != nil {
 		fmt.Println("Find ID Info Error!!", err)

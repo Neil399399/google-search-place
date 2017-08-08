@@ -40,7 +40,7 @@ func (w *WriteToSQL) ReadName(data datamodel.Coffee) (*sql.Rows, error) {
 	if err != nil {
 		fmt.Println("ReadName String to Int Error!!", err)
 	}
-	return w.read("SELECT Name FROM CoffeeInfo WHERE PlaceID IN (SELECT PlaceID FROM CoffeeComment WHERE ID= ?", int_ID)
+	return w.read("SELECT Name FROM CoffeeInfo WHERE PlaceID IN (SELECT PlaceID FROM CoffeeComment WHERE ID= ?)", int_ID)
 }
 
 func (w *WriteToSQL) read(sqlQuery string, args ...interface{}) (*sql.Rows, error) {
