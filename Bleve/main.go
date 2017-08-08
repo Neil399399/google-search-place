@@ -21,23 +21,27 @@ var (
 
 func main() {
 
-	com, err := Read(filename)
-	if err != nil {
-		fmt.Println("Read Error!!", err)
-	}
-	/*
-		err = CreateIndex(com, index_dir)
+	/*	com, err := Read(filename)
 		if err != nil {
-			fmt.Println("CreateIndex Error!!", err)
+			fmt.Println("Read Error!!", err)
 		}
+
+			err = CreateIndex(com, index_dir)
+			if err != nil {
+				fmt.Println("CreateIndex Error!!", err)
+			}
 	*/
 	query, err := jiebatest()
 	if err != nil {
 		fmt.Println("jieba Error!!", err)
 	}
-	err = CountResult(index_dir, query)
+	dataCounter, err := CountResult(index_dir, query)
 	if err != nil {
 		fmt.Println("CountTesult Error!!", err)
+	}
+	error := SortTotal(dataCounter)
+	if err != nil {
+		fmt.Println("Sort Total Error!!", err)
 	}
 
 }
@@ -125,7 +129,7 @@ func prettify(res *bleve.SearchResult) (string, error) {
 	return string(b), nil
 }
 
-func CountResult(index_dir string, querys []string) error {
+func CountResult(index_dir string, querys []string) (map[string]int, error) {
 	type Result struct {
 		Id    string
 		Score float64
@@ -155,6 +159,16 @@ func CountResult(index_dir string, querys []string) error {
 	for k, v := range dataCounter {
 		fmt.Println("id:", k)
 		fmt.Println("total:", v)
+
 	}
+	return dataCounter, nil
+}
+
+func SortTotal(data map[string]int) error {
+
+	fmt.Println(data)
+	fmt.Println(data[2])
+	fmt.Println(len(data))
+
 	return nil
 }
