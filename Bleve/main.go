@@ -27,6 +27,7 @@ var (
 	index_dir  = "coffee.bleve"
 	index_dir1 = "coffeeInfo.bleve"
 	name       string
+	placeID    string
 )
 
 func main() {
@@ -54,9 +55,15 @@ func main() {
 	if err != nil {
 		fmt.Println("Find Top3 Error!!", err)
 	}
-	fmt.Println(first, second, third)
-
 	err = FindIDInfo(first)
+	if err != nil {
+		fmt.Println("Find ID Info Error!!", err)
+	}
+	err = FindIDInfo(second)
+	if err != nil {
+		fmt.Println("Find ID Info Error!!", err)
+	}
+	err = FindIDInfo(third)
 	if err != nil {
 		fmt.Println("Find ID Info Error!!", err)
 	}
@@ -200,19 +207,47 @@ func SortTotal(data map[string]int) ([]CountArray, error) {
 
 	return countarrays, nil
 }
-func Top3(data []CountArray) (string, string, string, error) {
-	var top1, top2, top3 string
-	top1 = data[0].id
-	top2 = data[1].id
-	top3 = data[2].id
+func Top3(array []CountArray) (string, string, string, error) {
+	sqlStore := sqlstore.NewWriteToSQL("root", "123456", "localhost", "hello")
+	var top [3]string
+	var Top map[string]interface{}
+	Top = make(map[string]interface{})
+	for i := 0; i < len(array); i++ {
+		data := datamodel.Coffee{}
+		data.Id = array[i].id
+		sql_res, err := sqlStore.ReadPlaceID(data)
+		if err != nil {
+			fmt.Println("Search PlaceID in SQL Error!!", err)
+		}
+		for sql_res.Next() {
+			err := sql_res.Scan(&placeID)
+			if err != nil {
+				fmt.Println("SQL Result Print Error!!", err)
+			}
+		}
 
-	return top1, top2, top3, nil
+		//find same placeID
+		if Top[placeID] == nil {
+			Top[placeID] = "excited"
+		}
+	}
+	i := 0
+	for k, _ := range Top {
+		if i < 3 {
+			top[i] = k
+			i++
+		} else {
+			break
+		}
+	}
+
+	return top[0], top[1], top[2], nil
 }
 
 func FindIDInfo(first string) error {
 
 	data := datamodel.Coffee{}
-	data.Id = first
+	data.Name = first
 	sqlStore := sqlstore.NewWriteToSQL("root", "123456", "localhost", "hello")
 	sql_res, err := sqlStore.ReadName(data)
 	if err != nil {
@@ -223,6 +258,7 @@ func FindIDInfo(first string) error {
 		if err != nil {
 			fmt.Println("SQL Result Print Error!!", err)
 		}
+
 		fmt.Println(name)
 	}
 	return nil

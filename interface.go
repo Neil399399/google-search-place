@@ -12,6 +12,7 @@ type Storage interface {
 	Write(data datamodel.Coffee) error
 	ReadId(data datamodel.Coffee) (*sql.Rows, error)
 	ReadName(data datamodel.Coffee) (*sql.Rows, error)
+	ReadPlaceID(data datamodel.Coffee) (*sql.Rows, error)
 	//	ReadReviewsByID(id string) []string
 }
 
@@ -42,5 +43,10 @@ func (s StoreImpl) ReadId(data datamodel.Coffee) (*sql.Rows, error) {
 
 func (s StoreImpl) ReadName(data datamodel.Coffee) (*sql.Rows, error) {
 	fmt.Println("ReadName?")
+	return nil, nil
+}
+
+func (s StoreImpl) ReadPlaceID(data datamodel.Coffee) (*sql.Rows, error) {
+	fmt.Println("ReadPlaceID?")
 	return nil, nil
 }
